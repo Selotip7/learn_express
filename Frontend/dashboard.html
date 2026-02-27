@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — NexApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    .main-layout { display: flex; min-height: 100vh; }
+    .content { flex: 1; overflow: auto; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .stat-card:hover { border-color: rgba(0,255,136,0.3); transform: translateY(-2px); }
+    .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .chart-bar {
+      flex: 1;
+      background: var(--surface2);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      min-height: 8px;
+      transition: height 0.5s ease;
+      cursor: pointer;
+    }
+    .chart-bar:hover .bar-fill { filter: brightness(1.2); }
+    .bar-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      border-radius: 4px 4px 0 0;
+      background: var(--accent);
+      transition: height 0.8s ease;
+    }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(42,42,58,0.5);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .progress-bar {
+      height: 6px; background: var(--surface2); border-radius: 3px;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 3px; background: var(--accent);
+      transition: width 1s ease;
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .sidebar.open { display: flex; position: fixed; z-index: 40; }
+    }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="p-5 border-b" style="border-color:var(--border)">
+      <a href="login.html" class="logo">
+        <div class="logo-icon">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+        </div>
+        NexApp
+      </a>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="nav-item active">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="crud.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Pengguna
+      </a>
+      <a href="#" class="nav-item" onclick="showToast('Fitur segera hadir!')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analitik
+      </a>
+      <a href="#" class="nav-item" onclick="showToast('Fitur segera hadir!')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Laporan
+      </a>
+      <hr style="border-color:var(--border); margin: 8px 0" />
+      <a href="#" class="nav-item" onclick="showToast('Fitur segera hadir!')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Pengaturan
+      </a>
+    </nav>
+
+    <div class="p-4 border-t" style="border-color:var(--border)">
+      <div class="flex items-center gap-3 mb-3 p-3 rounded-12 rounded-xl" style="background:var(--surface2)">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style="background:var(--accent); color:#000" id="av">U</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold truncate" id="sb-name">User</p>
+          <p class="text-xs truncate" style="color:var(--muted)" id="sb-email">user@app.com</p>
+        </div>
+      </div>
+      <a href="logout.html" class="nav-item" style="color:var(--danger)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Keluar
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="content p-6 lg:p-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8 fade-up">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:var(--accent); font-family:var(--mono)">// Overview</p>
+        <h1 class="text-2xl font-extrabold text-white">Dashboard</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden sm:block">
+          <p class="text-xs" style="color:var(--muted)" id="date-str">—</p>
+          <p class="text-xs font-semibold" style="color:var(--accent); font-family:var(--mono)" id="time-str">00:00:00</p>
+        </div>
+        <a href="crud.html" class="btn btn-accent btn-sm">+ Tambah User</a>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="stat-card fade-up stagger-1">
+        <div class="stat-icon" style="background:rgba(0,255,136,0.1)">
+          <svg width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <p class="text-2xl font-extrabold text-white mb-1" id="stat-total">0</p>
+        <p class="text-xs" style="color:var(--muted)">Total Pengguna</p>
+      </div>
+      <div class="stat-card fade-up stagger-2">
+        <div class="stat-icon" style="background:rgba(0,255,136,0.1)">
+          <svg width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+        </div>
+        <p class="text-2xl font-extrabold text-white mb-1" id="stat-active">0</p>
+        <p class="text-xs" style="color:var(--muted)">Aktif</p>
+      </div>
+      <div class="stat-card fade-up stagger-3">
+        <div class="stat-icon" style="background:rgba(255,170,0,0.1)">
+          <svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p class="text-2xl font-extrabold text-white mb-1" id="stat-inactive">0</p>
+        <p class="text-xs" style="color:var(--muted)">Tidak Aktif</p>
+      </div>
+      <div class="stat-card fade-up stagger-4">
+        <div class="stat-icon" style="background:rgba(77,159,255,0.1)">
+          <svg width="20" height="20" fill="none" stroke="var(--info)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <p class="text-2xl font-extrabold text-white mb-1" id="stat-admin">0</p>
+        <p class="text-xs" style="color:var(--muted)">Admin</p>
+      </div>
+    </div>
+
+    <!-- Charts + Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+      <!-- Bar chart -->
+      <div class="lg:col-span-2 fade-up stagger-2" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:var(--muted); font-family:var(--mono)">Pengguna per Role</p>
+            <h3 class="text-lg font-bold text-white">Distribusi Role</h3>
+          </div>
+        </div>
+        <div class="flex items-end gap-3 h-40" id="role-chart">
+          <!-- bars rendered by JS -->
+        </div>
+        <div class="flex gap-4 mt-4 flex-wrap" id="role-legend"></div>
+      </div>
+
+      <!-- Activity feed -->
+      <div class="fade-up stagger-3" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px">
+        <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:var(--muted); font-family:var(--mono)">Aktivitas</p>
+        <h3 class="text-lg font-bold text-white mb-4">Terbaru</h3>
+        <div id="activity-feed">
+          <p class="text-sm" style="color:var(--muted)">Belum ada aktivitas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent users table -->
+    <div class="fade-up stagger-4" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:var(--muted); font-family:var(--mono)">Tabel</p>
+          <h3 class="text-lg font-bold text-white">Pengguna Terbaru</h3>
+        </div>
+        <a href="crud.html" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recent-tbody">
+            <tr><td colspan="4" class="text-center py-8" style="color:var(--muted)">Belum ada data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Clock
+window.addEventListener("storage", function (event) {
+  if (event.key === "logout") {
+    window.location.href = "login.html";
+  }
+});
+async function auth(){
+  console.log("eroor su");
+  try{
+    const response = await fetch("http://localhost:3001/api/user/me", {
+      method: "GET",
+      credentials: "include"
+    });
+    if (!response.ok) {
+      // throw new Error=response.err
+      // window.location.href = "/login.html";
+      // return;
+    }
+
+    const data = await response.json();
+
+    if (data.success === false) {
+      localStorage.setItem("role","false")
+      window.location.href = "login.html";
+
+      // return;
+    }
+    console.log(data.success)
+    console.log("User valid:", data);
+
+  } catch(err){
+    console.log("eroor susssssss");
+    console.error(err);
+    // window.location.href = "/login.html";
+  }
+}
+
+auth();
+function tick() {
+  const now = new Date();
+  document.getElementById('date-str').textContent = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('time-str').textContent = now.toTimeString().slice(0,8);
+}
+tick(); setInterval(tick, 1000);
+
+// User info
+const user = JSON.parse(localStorage.getItem('nx_user') || '{"name":"Demo User","email":"demo@app.com"}');
+document.getElementById('sb-name').textContent = user.name;
+document.getElementById('sb-email').textContent = user.email;
+document.getElementById('av').textContent = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+// Load users
+const DEFAULT_USERS = [
+  {id:1,name:'Budi Santoso',email:'budi@contoh.com',role:'Admin',status:'Aktif'},
+  {id:2,name:'Dewi Rahayu',email:'dewi@contoh.com',role:'Editor',status:'Aktif'},
+  {id:3,name:'Andi Wijaya',email:'andi@contoh.com',role:'User',status:'Tidak Aktif'},
+  {id:4,name:'Siti Nurhaliza',email:'siti@contoh.com',role:'User',status:'Aktif'},
+  {id:5,name:'Rizky Fadhillah',email:'rizky@contoh.com',role:'User',status:'Aktif'},
+];
+let users = JSON.parse(localStorage.getItem('nx_users') || 'null') || DEFAULT_USERS;
+
+// Stats
+document.getElementById('stat-total').textContent = users.length;
+document.getElementById('stat-active').textContent = users.filter(u=>u.status==='Aktif').length;
+document.getElementById('stat-inactive').textContent = users.filter(u=>u.status==='Tidak Aktif').length;
+document.getElementById('stat-admin').textContent = users.filter(u=>u.role==='Admin').length;
+
+// Bar chart
+const roles = ['Admin','Editor','User'];
+const roleColors = {'Admin':'var(--info)','Editor':'var(--warning)','User':'var(--accent)'};
+const max = Math.max(...roles.map(r=>users.filter(u=>u.role===r).length),1);
+const chartEl = document.getElementById('role-chart');
+chartEl.innerHTML = roles.map(r=>{
+  const count = users.filter(u=>u.role===r).length;
+  const pct = (count/max)*100;
+  return `
+    <div class="flex flex-col items-center gap-2 flex-1">
+      <span class="text-xs font-bold" style="color:${roleColors[r]}; font-family:var(--mono)">${count}</span>
+      <div class="chart-bar w-full" style="background:var(--surface2)">
+        <div class="bar-fill" style="height:${Math.max(pct,8)}%; background:${roleColors[r]};opacity:0.8"></div>
+      </div>
+      <span class="text-xs" style="color:var(--muted)">${r}</span>
+    </div>`;
+}).join('');
+
+// Legend
+document.getElementById('role-legend').innerHTML = roles.map(r=>`
+  <div class="flex items-center gap-1.5 text-xs" style="color:var(--muted)">
+    <div class="w-2 h-2 rounded-full" style="background:${roleColors[r]}"></div>${r}
+  </div>`).join('');
+
+// Activity feed
+const activities = [
+  {color:'var(--accent)',text:'Pengguna baru ditambahkan',time:'2m lalu'},
+  {color:'var(--info)',text:'Data diperbarui',time:'15m lalu'},
+  {color:'var(--warning)',text:'Pengguna dinonaktifkan',time:'1j lalu'},
+  {color:'var(--danger)',text:'Pengguna dihapus',time:'3j lalu'},
+];
+document.getElementById('activity-feed').innerHTML = activities.map(a=>`
+  <div class="activity-item">
+    <div class="activity-dot" style="background:${a.color}"></div>
+    <div class="flex-1"><p class="text-xs text-white">${a.text}</p></div>
+    <span class="text-xs flex-shrink-0" style="color:var(--muted); font-family:var(--mono)">${a.time}</span>
+  </div>`).join('');
+
+// Recent table
+const recent = [...users].slice(-5).reverse();
+document.getElementById('recent-tbody').innerHTML = recent.map(u=>`
+  <tr>
+    <td>
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style="background:var(--accent-dim); color:var(--accent)">
+          ${u.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+        </div>
+        <span class="font-medium text-white">${u.name}</span>
+      </div>
+    </td>
+    <td style="color:var(--muted)">${u.email}</td>
+    <td><span class="badge ${u.role==='Admin'?'badge-blue':u.role==='Editor'?'badge-yellow':'badge-green'}">${u.role}</span></td>
+    <td><span class="badge ${u.status==='Aktif'?'badge-green':'badge-red'}">${u.status}</span></td>
+  </tr>`).join('');
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

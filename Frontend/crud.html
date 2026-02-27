@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengguna — NexApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    .main-layout { display: flex; min-height: 100vh; }
+    .content { flex: 1; overflow: auto; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      background: var(--accent-dim); color: var(--accent);
+      font-family: var(--mono);
+    }
+    .filter-btn {
+      padding: 7px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border);
+      background: transparent; color: var(--muted);
+      transition: all 0.2s; font-family: var(--mono);
+    }
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .actions-col { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .search-wrap { position: relative; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .search-wrap .input { padding-left: 38px; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .pagination { display: flex; align-items: center; gap: 4px; }
+    .page-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; font-family: var(--mono);
+    }
+    .page-btn:hover, .page-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    @media (max-width: 768px) { .sidebar { display: none; } }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="del-modal">
+  <div class="modal text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:rgba(255,77,106,0.1); border:1px solid rgba(255,77,106,0.3)">
+      <svg width="28" height="28" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <h3 class="text-xl font-extrabold text-white mb-2">Hapus Pengguna?</h3>
+    <p class="text-sm mb-6" style="color:var(--muted)">Data <strong class="text-white" id="del-name">—</strong> akan dihapus permanen.</p>
+    <div class="flex gap-3">
+      <button onclick="closeDelModal()" class="btn btn-ghost flex-1">Batal</button>
+      <button onclick="confirmDelete()" class="btn btn-danger flex-1">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="form-modal">
+  <div class="modal" style="max-width:520px">
+    <button onclick="closeFormModal()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">&times;</button>
+    <p class="label mb-1" style="color:var(--accent)">// Form</p>
+    <h3 class="text-2xl font-extrabold text-white mb-6" id="modal-title">Tambah Pengguna</h3>
+    <form onsubmit="saveUser(event)">
+      <input type="hidden" id="edit-id" />
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="label">Nama Depan</label>
+          <input id="f-firstname" type="text" class="input" placeholder="John" required />
+        </div>
+        <div>
+          <label class="label">Nama Belakang</label>
+          <input id="f-lastname" type="text" class="input" placeholder="Doe" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="label">Email</label>
+        <input id="f-email" type="email" class="input" placeholder="john@contoh.com" required />
+      </div>
+      <div class="mb-4">
+        <label class="label">No. Telepon <span style="color:var(--muted)">(opsional)</span></label>
+        <input id="f-phone" type="tel" class="input" placeholder="+62 812 xxxx xxxx" />
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="label">Role</label>
+          <select id="f-role" class="input">
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+            <option value="Editor">Editor</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Status</label>
+          <select id="f-status" class="input">
+            <option value="Aktif">Aktif</option>
+            <option value="Tidak Aktif">Tidak Aktif</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeFormModal()" class="btn btn-ghost flex-1">Batal</button>
+        <button type="submit" class="btn btn-accent flex-1">Simpan →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal" style="max-width:440px">
+    <button onclick="document.getElementById('view-modal').classList.remove('open')" style="position:absolute;top:16px;right:20px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">&times;</button>
+    <div id="view-content"></div>
+  </div>
+</div>
+
+<div class="main-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="p-5 border-b" style="border-color:var(--border)">
+      <a href="login.html" class="logo">
+        <div class="logo-icon">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+        </div>
+        NexApp
+      </a>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="crud.html" class="nav-item active">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Pengguna
+      </a>
+      <a href="#" class="nav-item" onclick="showToast('Segera hadir!')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analitik
+      </a>
+    </nav>
+    <div class="p-4 border-t" style="border-color:var(--border)">
+      <div class="flex items-center gap-3 mb-3 p-3 rounded-xl" style="background:var(--surface2)">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style="background:var(--accent); color:#000" id="av">U</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold truncate" id="sb-name">User</p>
+          <p class="text-xs truncate" style="color:var(--muted)" id="sb-email">user@app.com</p>
+        </div>
+      </div>
+      <a href="logout.html" class="nav-item" style="color:var(--danger)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Keluar
+      </a>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content p-6 lg:p-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 fade-up">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:var(--accent); font-family:var(--mono)">// CRUD</p>
+        <h1 class="text-2xl font-extrabold text-white">Kelola Pengguna</h1>
+        <p class="text-sm mt-0.5" style="color:var(--muted)"><span id="total-count">0</span> pengguna terdaftar</p>
+      </div>
+      <button onclick="openAdd()" class="btn btn-accent" style="align-self:flex-start">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Pengguna
+      </button>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-5 fade-up stagger-1">
+      <div class="search-wrap flex-1 max-w-xs">
+        <span class="search-icon">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" id="search" class="input" placeholder="Cari nama atau email..." oninput="renderTable()" />
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="filter-btn active" onclick="setFilter('semua',this)">Semua</button>
+        <button class="filter-btn" onclick="setFilter('Aktif',this)">Aktif</button>
+        <button class="filter-btn" onclick="setFilter('Tidak Aktif',this)">Tidak Aktif</button>
+        <button class="filter-btn" onclick="setFilter('Admin',this)">Admin</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="fade-up stagger-2" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden">
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:44px">#</th>
+              <th>Pengguna</th>
+              <th>Kontak</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty-state hidden">
+          <svg class="mx-auto mb-3 w-12 h-12" fill="none" stroke="var(--border)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <p class="text-sm font-semibold text-white mb-1">Tidak ada data</p>
+          <p class="text-xs" style="color:var(--muted)">Coba ubah filter atau kata kunci pencarian</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between mt-4 fade-up stagger-3">
+      <p class="text-xs" style="color:var(--muted); font-family:var(--mono)" id="page-info">—</p>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_USERS = [
+  {id:1,name:'Budi Santoso',email:'budi@contoh.com',phone:'+62 812 0001',role:'Admin',status:'Aktif'},
+  {id:2,name:'Dewi Rahayu',email:'dewi@contoh.com',phone:'+62 812 0002',role:'Editor',status:'Aktif'},
+  {id:3,name:'Andi Wijaya',email:'andi@contoh.com',phone:'+62 812 0003',role:'User',status:'Tidak Aktif'},
+  {id:4,name:'Siti Nurhaliza',email:'siti@contoh.com',phone:'+62 812 0004',role:'User',status:'Aktif'},
+  {id:5,name:'Rizky Fadhillah',email:'rizky@contoh.com',phone:'+62 812 0005',role:'User',status:'Aktif'},
+  {id:6,name:'Maya Sari',email:'maya@contoh.com',phone:'+62 812 0006',role:'Editor',status:'Tidak Aktif'},
+];
+let users = JSON.parse(localStorage.getItem('nx_users') || 'null') || DEFAULT_USERS;
+let nextId = users.length ? Math.max(...users.map(u=>u.id))+1 : 1;
+let currentFilter = 'semua';
+let deletingId = null;
+let currentPage = 1;
+const PER_PAGE = 8;
+
+function save() { localStorage.setItem('nx_users', JSON.stringify(users)); }
+
+// Sidebar user info
+const user = JSON.parse(localStorage.getItem('nx_user') || '{"name":"Demo","email":"demo@app.com"}');
+document.getElementById('sb-name').textContent = user.name;
+document.getElementById('sb-email').textContent = user.email;
+document.getElementById('av').textContent = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+function setFilter(f, el) {
+  currentFilter = f;
+  currentPage = 1;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  return users.filter(u => {
+    const matchQ = u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const matchF = currentFilter === 'semua' || u.status === currentFilter || u.role === currentFilter;
+    return matchQ && matchF;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const paged = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+  document.getElementById('total-count').textContent = users.length;
+  document.getElementById('page-info').textContent = total === 0 ? '0 hasil' : `${(currentPage-1)*PER_PAGE+1}–${Math.min(currentPage*PER_PAGE,total)} dari ${total}`;
+
+  const tbody = document.getElementById('table-body');
+  const empty = document.getElementById('empty-state');
+
+  if (paged.length === 0) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+  } else {
+    empty.classList.add('hidden');
+    tbody.innerHTML = paged.map((u,i) => `
+      <tr>
+        <td style="color:var(--muted); font-family:var(--mono); font-size:12px">${(currentPage-1)*PER_PAGE+i+1}</td>
+        <td>
+          <div class="flex items-center gap-3">
+            <div class="avatar">${u.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+            <span class="font-semibold text-white text-sm">${u.name}</span>
+          </div>
+        </td>
+        <td style="color:var(--muted); font-size:13px">${u.email}</td>
+        <td><span class="badge ${u.role==='Admin'?'badge-blue':u.role==='Editor'?'badge-yellow':'badge-green'}">${u.role}</span></td>
+        <td><span class="badge ${u.status==='Aktif'?'badge-green':'badge-red'}">${u.status}</span></td>
+        <td>
+          <div class="actions-col">
+            <button onclick="viewUser(${u.id})" class="btn btn-ghost btn-sm" title="Detail">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button onclick="openEdit(${u.id})" class="btn btn-ghost btn-sm" title="Edit">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button onclick="openDelete(${u.id})" class="btn btn-sm" style="background:rgba(255,77,106,0.1);color:var(--danger);border:1px solid rgba(255,77,106,0.2)" title="Hapus">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Pagination
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  for(let p=1; p<=totalPages; p++) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (p===currentPage?' active':'');
+    btn.textContent = p;
+    btn.onclick = () => { currentPage = p; renderTable(); };
+    pg.appendChild(btn);
+  }
+}
+
+function openAdd() {
+  document.getElementById('edit-id').value = '';
+  document.getElementById('modal-title').textContent = 'Tambah Pengguna';
+  ['f-firstname','f-lastname','f-email','f-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-role').value = 'User';
+  document.getElementById('f-status').value = 'Aktif';
+  document.getElementById('form-modal').classList.add('open');
+}
+
+function openEdit(id) {
+  const u = users.find(u=>u.id===id);
+  if (!u) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('modal-title').textContent = 'Edit Pengguna';
+  const [fn,...ln] = u.name.split(' ');
+  document.getElementById('f-firstname').value = fn;
+  document.getElementById('f-lastname').value = ln.join(' ');
+  document.getElementById('f-email').value = u.email;
+  document.getElementById('f-phone').value = u.phone || '';
+  document.getElementById('f-role').value = u.role;
+  document.getElementById('f-status').value = u.status;
+  document.getElementById('form-modal').classList.add('open');
+}
+
+function closeFormModal() { document.getElementById('form-modal').classList.remove('open'); }
+
+function saveUser(e) {
+  e.preventDefault();
+  const id = document.getElementById('edit-id').value;
+  const fn = document.getElementById('f-firstname').value.trim();
+  const ln = document.getElementById('f-lastname').value.trim();
+  const data = {
+    name: (fn + ' ' + ln).trim(),
+    email: document.getElementById('f-email').value,
+    phone: document.getElementById('f-phone').value,
+    role: document.getElementById('f-role').value,
+    status: document.getElementById('f-status').value,
+  };
+  if (id) {
+    const idx = users.findIndex(u=>u.id===parseInt(id));
+    users[idx] = {...users[idx],...data};
+    showToast('✓ Pengguna berhasil diperbarui');
+  } else {
+    users.push({id:nextId++,...data});
+    showToast('✓ Pengguna berhasil ditambahkan');
+  }
+  save(); closeFormModal(); renderTable();
+}
+
+function openDelete(id) {
+  deletingId = id;
+  const u = users.find(u=>u.id===id);
+  document.getElementById('del-name').textContent = u?.name || '—';
+  document.getElementById('del-modal').classList.add('open');
+}
+
+function closeDelModal() { document.getElementById('del-modal').classList.remove('open'); deletingId=null; }
+
+function confirmDelete() {
+  users = users.filter(u=>u.id!==deletingId);
+  save(); closeDelModal(); renderTable();
+  showToast('🗑 Pengguna dihapus');
+}
+
+function viewUser(id) {
+  const u = users.find(u=>u.id===id);
+  if (!u) return;
+  document.getElementById('view-content').innerHTML = `
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-xl font-bold" style="background:var(--accent-dim);color:var(--accent);font-family:var(--mono)">
+        ${u.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+      </div>
+      <h3 class="text-xl font-extrabold text-white">${u.name}</h3>
+      <div class="flex items-center justify-center gap-2 mt-2">
+        <span class="badge ${u.role==='Admin'?'badge-blue':u.role==='Editor'?'badge-yellow':'badge-green'}">${u.role}</span>
+        <span class="badge ${u.status==='Aktif'?'badge-green':'badge-red'}">${u.status}</span>
+      </div>
+    </div>
+    <div class="space-y-3">
+      ${[['Email',u.email,'✉'],['Telepon',u.phone||'—','📞'],['ID','#'+u.id,'🆔']].map(([l,v,ic])=>`
+        <div class="flex items-center justify-between py-2.5 border-b" style="border-color:var(--border)">
+          <span class="text-xs" style="color:var(--muted);font-family:var(--mono)">${l}</span>
+          <span class="text-sm text-white font-medium">${ic} ${v}</span>
+        </div>`).join('')}
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="document.getElementById('view-modal').classList.remove('open')" class="btn btn-ghost flex-1">Tutup</button>
+      <button onclick="document.getElementById('view-modal').classList.remove('open'); openEdit(${u.id})" class="btn btn-accent flex-1">Edit →</button>
+    </div>`;
+  document.getElementById('view-modal').classList.add('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Close modal on overlay click
+['del-modal','form-modal','view-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', function(e){
+    if(e.target===this) this.classList.remove('open');
+  });
+});
+
+renderTable();
+</script>
+</body>
+</html>

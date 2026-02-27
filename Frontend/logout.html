@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keluar — NexApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    .ring-anim {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto;
+    }
+    .ring-anim::before {
+      content: '';
+      position: absolute; inset: -2px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeScale { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:scale(1); } }
+    @keyframes countDown { from { stroke-dashoffset: 283; } to { stroke-dashoffset: 0; } }
+    .fade-scale { animation: fadeScale 0.5s ease forwards; }
+    .progress-circle {
+      transform: rotate(-90deg);
+      transform-origin: center;
+    }
+    .circle-track { fill: none; stroke: var(--border); stroke-width: 3; }
+    .circle-progress { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="min-h-screen flex items-center justify-center p-6 z1">
+  <div class="w-full max-w-sm text-center fade-scale">
+
+    <!-- State: Confirm -->
+    <div id="state-confirm">
+      <div class="mb-8">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style="background:rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.25)">
+          <svg width="32" height="32" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16,17 21,12 16,7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mb-2">Keluar?</h1>
+        <p class="text-sm" style="color:var(--muted)">Sesi Anda akan diakhiri. Pastikan pekerjaan sudah tersimpan.</p>
+      </div>
+
+      <!-- User card -->
+      <div class="p-4 rounded-14 rounded-2xl mb-8 flex items-center gap-4" style="background:var(--surface); border:1px solid var(--border)">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-base flex-shrink-0" style="background:var(--accent); color:#000; font-family:var(--mono)" id="av-main">U</div>
+        <div class="text-left flex-1 min-w-0">
+          <p class="font-bold text-white truncate" id="user-name">Demo User</p>
+          <p class="text-xs truncate" style="color:var(--muted)" id="user-email">demo@app.com</p>
+        </div>
+        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:var(--accent)"></div>
+      </div>
+
+      <div class="space-y-3">
+        <button onclick="startLogout()" class="btn btn-danger btn-full" style="font-size:15px; padding:15px">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Ya, Keluar Sekarang
+        </button>
+        <a href="dashboard.html" class="btn btn-ghost btn-full" style="font-size:15px; padding:15px">
+          ← Kembali ke Dashboard
+        </a>
+      </div>
+
+      <div class="mt-8 p-4 rounded-xl text-left" style="background:var(--surface); border:1px solid var(--border)">
+        <p class="text-xs font-bold uppercase tracking-wider mb-3" style="color:var(--muted); font-family:var(--mono)">Sesi Aktif</p>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span style="color:var(--muted)">Browser</span>
+            <span class="text-white" id="browser-info">—</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span style="color:var(--muted)">Waktu masuk</span>
+            <span class="text-white" id="login-time">—</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span style="color:var(--muted)">Status</span>
+            <span class="badge badge-green" style="padding:2px 8px; font-size:10px">Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State: Loading -->
+    <div id="state-loading" class="hidden">
+      <div class="ring-anim mb-6">
+        <svg width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24" class="opacity-60">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16,17 21,12 16,7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-extrabold text-white mb-2">Mengakhiri Sesi...</h2>
+      <p class="text-sm" style="color:var(--muted)">Mohon tunggu sebentar</p>
+      <div class="mt-6 flex justify-center gap-1.5">
+        <div class="w-2 h-2 rounded-full" style="background:var(--accent); animation: bounce 0.8s ease infinite"></div>
+        <div class="w-2 h-2 rounded-full" style="background:var(--accent); animation: bounce 0.8s ease 0.15s infinite"></div>
+        <div class="w-2 h-2 rounded-full" style="background:var(--accent); animation: bounce 0.8s ease 0.3s infinite"></div>
+      </div>
+    </div>
+
+    <!-- State: Done -->
+    <div id="state-done" class="hidden">
+      <!-- Countdown ring -->
+      <div class="relative w-32 h-32 mx-auto mb-6">
+        <svg width="128" height="128" viewBox="0 0 100 100">
+          <circle class="circle-track" cx="50" cy="50" r="45"/>
+          <circle class="circle-progress progress-circle" cx="50" cy="50" r="45"
+            stroke-dasharray="283" stroke-dashoffset="283" id="circle-prog"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="font-extrabold text-3xl text-white" style="font-family:var(--mono)" id="count-num">3</span>
+        </div>
+      </div>
+      <h2 class="text-2xl font-extrabold text-white mb-2">Berhasil Keluar</h2>
+      <p class="text-sm mb-6" style="color:var(--muted)">Sampai jumpa! Dialihkan dalam <span id="count-text">3</span> detik...</p>
+
+      <div class="flex items-center justify-center gap-2 mb-6 p-3 rounded-xl" style="background:var(--accent-dim); border:1px solid rgba(0,255,136,0.2)">
+        <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+        <p class="text-sm font-semibold" style="color:var(--accent)">Sesi telah diakhiri dengan aman</p>
+      </div>
+
+      <div class="space-y-2">
+        <a href="login.html" class="btn btn-accent btn-full">Masuk Lagi</a>
+        <a href="login.html" class="btn btn-ghost btn-full" style="font-size:13px">Kembali ke Halaman Utama</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+</style>
+
+<script>
+// User info
+const user = JSON.parse(localStorage.getItem('nx_user') || '{"name":"Demo User","email":"demo@app.com"}');
+document.getElementById('user-name').textContent = user.name;
+document.getElementById('user-email').textContent = user.email;
+document.getElementById('av-main').textContent = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+// Session info
+const ua = navigator.userAgent;
+let browser = 'Browser';
+if (ua.includes('Chrome')) browser = 'Chrome';
+else if (ua.includes('Firefox')) browser = 'Firefox';
+else if (ua.includes('Safari')) browser = 'Safari';
+else if (ua.includes('Edge')) browser = 'Edge';
+document.getElementById('browser-info').textContent = browser;
+document.getElementById('login-time').textContent = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
+
+async function logout(){
+  try{
+    const response=await fetch("http://localhost:3001/api/user/logout", {
+          method: "GET",
+          credentials:"include"
+        });
+
+        if(!response.ok){
+          throw new Error("Logout failed");
+        }
+
+         setTimeout(() => {
+          
+    document.getElementById('state-loading').classList.add('hidden');
+    document.getElementById('state-done').classList.remove('hidden');
+    startCountdown();
+  }, 1800);
+  }catch(err){
+    console.error("Logout error:", err);
+  }
+}
+
+function startLogout() {
+  document.getElementById('state-confirm').classList.add('hidden');
+  document.getElementById('state-loading').classList.remove('hidden');
+  console.log("Starting logout process...");
+  localStorage.removeItem('nx_user');
+  localStorage.setItem('logout','true');
+  logout();
+ 
+}
+
+function startCountdown() {
+  let count = 3;
+  const circle = document.getElementById('circle-prog');
+  const totalDash = 283;
+
+  const interval = setInterval(() => {
+    count--;
+    document.getElementById('count-num').textContent = count;
+    document.getElementById('count-text').textContent = count;
+    circle.style.strokeDashoffset = totalDash - (totalDash * (3 - count) / 3);
+    if (count <= 0) {
+      clearInterval(interval);
+      window.location.href = 'login.html';
+    }
+  }, 1000);
+
+  // Animate circle smoothly
+  circle.style.transition = 'stroke-dashoffset 1s linear';
+  circle.style.strokeDashoffset = String(totalDash - totalDash/3);
+}
+</script>
+</body>
+</html>

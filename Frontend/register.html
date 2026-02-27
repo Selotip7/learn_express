@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar — NexApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    .bg-glow {
+      position: fixed;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,136,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .strength-bar { height: 4px; border-radius: 2px; transition: all 0.3s; }
+    .step-circle {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; font-family: var(--mono);
+      transition: all 0.3s;
+    }
+    .step-line { flex: 1; height: 1px; }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); pointer-events: none;
+    }
+    .input-wrap .input { padding-left: 42px; }
+    .toggle-pass {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); cursor: pointer; background: none; border: none;
+    }
+    .toggle-pass:hover { color: var(--accent); }
+    .check-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--muted); font-family: var(--mono);
+      transition: color 0.2s;
+    }
+    .check-item.pass { color: var(--accent); }
+    .check-icon { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="bg-glow" style="top:-100px; right:-100px;"></div>
+<div class="bg-glow" style="bottom:-150px; left:-150px; background: radial-gradient(circle, rgba(77,159,255,0.05) 0%, transparent 70%);"></div>
+
+<div class="min-h-screen flex items-center justify-center p-6 z1">
+  <div class="w-full max-w-lg">
+
+    <!-- Header -->
+    <div class="text-center mb-8 fade-up">
+      <a href="login.html" class="logo inline-flex mb-6">
+        <div class="logo-icon">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+        </div>
+        NexApp
+      </a>
+      <h1 class="text-3xl font-extrabold text-white mb-2">Buat akun baru</h1>
+      <p class="text-sm" style="color:var(--muted)">Sudah punya akun? <a href="login.html" style="color:var(--accent)" class="font-semibold hover:underline">Masuk →</a></p>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="flex items-center gap-2 mb-8 fade-up stagger-1 px-4">
+      <div class="step-circle" id="step1-circle" style="background:var(--accent); color:#000;">1</div>
+      <div class="step-line" id="step-line" style="background:var(--border);"></div>
+      <div class="step-circle" id="step2-circle" style="background:var(--surface2); color:var(--muted); border:1.5px solid var(--border);">2</div>
+      <div class="step-line" style="background:var(--border);"></div>
+      <div class="step-circle" id="step3-circle" style="background:var(--surface2); color:var(--muted); border:1.5px solid var(--border);">✓</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="step-1" class="card fade-up stagger-2">
+      <p class="label mb-4" style="color:var(--accent)">Langkah 1 — Informasi Pribadi</p>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="label">Nama Depan</label>
+            <input id="firstname" type="text" class="input" placeholder="John" required />
+          </div>
+          <div>
+            <label class="label">Nama Belakang</label>
+            <input id="lastname" type="text" class="input" placeholder="Doe" required />
+          </div>
+        </div>
+        <div>
+          <label class="label">Email</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+            </span>
+            <input id="reg-email" type="email" class="input" placeholder="anda@contoh.com" required />
+          </div>
+        </div>
+        <div>
+          <label class="label">No. Telepon <span style="color:var(--muted)">(opsional)</span></label>
+          <input id="phone" type="tel" class="input" placeholder="+62 812 3456 7890" />
+        </div>
+        <button onclick="goStep2()" class="btn btn-accent btn-full mt-2">Lanjut →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="step-2" class="card fade-up hidden">
+      <p class="label mb-4" style="color:var(--accent)">Langkah 2 — Buat Password</p>
+      <div class="space-y-4">
+        <div>
+          <label class="label">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input id="reg-pass" type="password" class="input" placeholder="Min. 8 karakter" oninput="checkStrength()" required />
+            <button type="button" class="toggle-pass" onclick="togglePass('reg-pass')">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <!-- Strength meter -->
+          <div class="mt-2">
+            <div class="flex gap-1 mb-2">
+              <div class="strength-bar flex-1" id="s1" style="background:var(--border)"></div>
+              <div class="strength-bar flex-1" id="s2" style="background:var(--border)"></div>
+              <div class="strength-bar flex-1" id="s3" style="background:var(--border)"></div>
+              <div class="strength-bar flex-1" id="s4" style="background:var(--border)"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+              <div class="check-item" id="c-len"><svg class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>Min. 8 karakter</div>
+              <div class="check-item" id="c-upper"><svg class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>Huruf besar</div>
+              <div class="check-item" id="c-num"><svg class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>Angka</div>
+              <div class="check-item" id="c-sym"><svg class="check-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>Simbol (!@#)</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="label">Konfirmasi Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </span>
+            <input id="reg-confirm" type="password" class="input" placeholder="Ulangi password" required />
+            <button type="button" class="toggle-pass" onclick="togglePass('reg-confirm')">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- <div>
+          <label class="label">Role</label>
+          <select id="reg-role" class="input">
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+            <option value="Editor">Editor</option>
+          </select>
+        </div> -->
+        <label class="flex items-start gap-3 cursor-pointer text-sm" style="color:var(--muted)">
+          <input type="checkbox" id="agree-terms" class="mt-0.5 accent-green-400" required />
+          <span>Saya menyetujui <a href="#" style="color:var(--accent)" class="hover:underline">Syarat & Ketentuan</a> serta <a href="#" style="color:var(--accent)" class="hover:underline">Kebijakan Privasi</a></span>
+        </label>
+        <div class="flex gap-3">
+          <button onclick="goStep1()" class="btn btn-ghost flex-1">← Kembali</button>
+          <button onclick="handleRegister()" class="btn btn-accent flex-1">Daftar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div id="step-3" class="card text-center hidden">
+      <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style="background:var(--accent-dim); border:1px solid rgba(0,255,136,0.3)">
+        <svg width="36" height="36" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+      </div>
+      <h2 class="text-2xl font-extrabold text-white mb-2">Akun Berhasil Dibuat!</h2>
+      <p class="text-sm mb-6" style="color:var(--muted)">Selamat bergabung di NexApp. Klik tombol di bawah untuk masuk.</p>
+      <a href="dashboard.html" class="btn btn-accent btn-full">Pergi ke Dashboard →</a>
+      <a href="login.html" class="btn btn-ghost btn-full mt-3">Masuk Manual</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+async function handleInput() {
+    // e.preventDefault();
+    
+ 
+}
+
+let regData = {};
+
+function goStep1() {
+  document.getElementById('step-1').classList.remove('hidden');
+  document.getElementById('step-2').classList.add('hidden');
+  document.getElementById('step1-circle').style.cssText = 'background:var(--accent);color:#000;';
+  document.getElementById('step2-circle').style.cssText = 'background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);';
+}
+
+function goStep2() {
+  const fn = document.getElementById('firstname').value.trim();
+  const ln = document.getElementById('lastname').value.trim();
+  const em = document.getElementById('reg-email').value.trim();
+  if (!fn || !ln || !em) { showToast('Lengkapi semua field!'); return; }
+  regData = { firstname: fn, lastname: ln, email: em, phone: document.getElementById('phone').value };
+  document.getElementById('step-1').classList.add('hidden');
+  document.getElementById('step-2').classList.remove('hidden');
+  document.getElementById('step2-circle').style.cssText = 'background:var(--accent);color:#000;';
+  document.getElementById('step-line').style.background = 'var(--accent)';
+}
+
+async function handleRegister() {
+ 
+  // const user = {
+  //   name: regData.firstname + ' ' + regData.lastname,
+  //   email: regData.email,
+  //   // role: document.getElementById('reg-role').value
+  // };
+  // localStorage.setItem('nx_user', JSON.stringify(user));
+   try {
+     const pass = document.getElementById('reg-pass').value;
+     const confirm = document.getElementById('reg-confirm').value;
+     const agreed = document.getElementById('agree-terms').checked;
+     if (pass.length < 8) { showToast('Password minimal 8 karakter!'); return; }
+     if (pass !== confirm) { showToast('Password tidak cocok!'); return; }
+     if (!agreed) { showToast('Setujui syarat & ketentuan dulu!'); return; }
+     
+     
+     const firstname=document.getElementById('firstname').value;
+     const lastname=document.getElementById('lastname').value;
+     const fullName = firstname + ' ' + lastname;
+     
+     const response = await fetch("http://localhost:3001/api/user/registration", {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json"
+          },
+          credentials:"include"
+          ,
+          body: JSON.stringify({
+            name: fullName,
+            email: document.getElementById('reg-email').value,
+            password:pass
+          })
+        });
+        
+        // cek status HTTP
+        if (!response.ok) {
+          console.log('response error')
+          throw new Error("Request gagal");
+        }
+        
+        const data = await response.json();
+        alert("masuk")
+        if(data.success==false){
+          console.log('ini data error')
+          throw new Error(data.message)
+        }
+    alert('Registrasi berhasil!');
+    showToast('Registrasi berhasil!');
+    document.getElementById('step-2').classList.add('hidden');
+  document.getElementById('step-3').classList.remove('hidden');
+  document.getElementById('step3-circle').style.cssText = 'background:var(--accent);color:#000;';
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function checkStrength() {
+  const val = document.getElementById('reg-pass').value;
+  const checks = {
+    len: val.length >= 8,
+    upper: /[A-Z]/.test(val),
+    num: /[0-9]/.test(val),
+    sym: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val)
+  };
+  const colors = ['#ff4d6a','#ff4d6a','#ffaa00','#00ff88'];
+  const score = Object.values(checks).filter(Boolean).length;
+  ['s1','s2','s3','s4'].forEach((id,i) => {
+    document.getElementById(id).style.background = i < score ? colors[score-1] : 'var(--border)';
+  });
+  Object.entries(checks).forEach(([k,v]) => {
+    const el = document.getElementById('c-'+k);
+    el.classList.toggle('pass', v);
+    el.querySelector('svg').innerHTML = v
+      ? '<polyline points="20,6 9,17 4,12"/>'
+      : '<circle cx="12" cy="12" r="10"/>';
+  });
+}
+
+function togglePass(id) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
