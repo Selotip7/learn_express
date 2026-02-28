@@ -1,12 +1,11 @@
-import { createUser,login } from "#src/services/user.js";
-import { asyncHandler } from "#src/utils/asyncHandler.js";
+import { createUser, login } from "#src/services/userServices.js";
+import { asyncHandler } from "#src/handler/asyncHandler.js";
 import {
   cookieOptions,
   generateAccessToken,
   generateRefreshToken,
-} from "#src/utils/jwtHandler.js";
+} from "#src/handler/jwtHandler.js";
 import jwt from "jsonwebtoken";
-
 
 export const registration = asyncHandler(async (req, res, next) => {
   if (!req.body.name || !req.body.email || !req.body.password) {
@@ -18,55 +17,56 @@ export const registration = asyncHandler(async (req, res, next) => {
   await createUser(req);
 
   return res.json({
-    success:true,
-    message:"user created successfully"
+    success: true,
+    message: "user created successfully",
   });
 });
 
 export const loginController = asyncHandler(async (req, res, next) => {
-  if(!req.body.email || !req.body.password) {
+  if (!req.body.email || !req.body.password) {
     const error = new Error("email and password are required");
     error.code = 400;
 
     throw error;
   }
 
- const user = await login(req);
-  
+  const user = await login(req);
 
-   const accessToken = generateAccessToken(user);
+  const accessToken = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
   console.log("accessToken:", accessToken);
-   res.cookie("accessToken", accessToken, cookieOptions)
+  res.cookie("refreshToken", refreshToken, cookieOptions);
   res.json({
-    success:true,
-    user:{
-      id:user.id,
-      name:user.name,
-      email:user.email,
-      token:accessToken
-    }
-  })
+    success: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      token: accessToken,
+    },
+  });
 });
 
 export const meController = asyncHandler(async (req, res, next) => {
   // const token = req.cookies.accessToken;
   // const user=jwt.decode(token);
-  
+
   res.json({
-    user:{
-      id:req.user.id,
-      name:req.user.name,
-      role:req.user.role,
-    }
+    user: {
+      id: req.user.id,
+      name: req.user.name,
+      role: req.user.role,
+    },
   });
-})
+});
 
 export const logoutController = asyncHandler(async (req, res, next) => {
   const token = req.cookies.accessToken;
   console.log("logout is running, token:", token);
-  res.clearCookie("accessToken", cookieOptions);
+  res.cookie("accessToken", "", { ...cookieOptions, maxAge: 60000 });
+  // res.clearCookie("accessToken", cookieOptions);
   res.json({
     message: "logged out",
     token,
   });
-})
+});

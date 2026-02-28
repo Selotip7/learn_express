@@ -3,7 +3,7 @@ import prisma from "../src/conn.js";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRouter  from "#src/routes/user.routes.js";
-import {errorHandler} from "#src/middleware/errorHandler.js"
+import {errorHandler} from "#src/handler/errorHandler.js"
 import cors from "cors";
 
 

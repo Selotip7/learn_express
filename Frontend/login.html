@@ -181,8 +181,14 @@
 
 <script>
   const auth=localStorage.getItem("role")
+
+  if (document.cookie.includes("accessToken")) {
+    alert("Anda sudah masuk, akan diarahkan ke dashboard")
+  window.location.href = "dashboard.html";
+}
+
   if(auth){
-    showToast("Anda tidak memilki akses")
+    showToast(auth)
     localStorage.removeItem("role")
   }
 

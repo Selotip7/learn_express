@@ -35,3 +35,28 @@ export const login = async(req)=>{
 // console.log("user:", user)
   return user;
 }
+
+
+export const createToken=async(user)=>{
+  const {id,token}=user
+  const createdToken=await prisma.token.create({
+    data:{
+      user_id:id,
+      token:token
+    }
+  })
+  console.log("creating token for user id:", id);
+
+  if(!createdToken){
+    throw new Error("failed to save token")
+  }
+}
+
+export const findToken=async(token)=>{
+  const find=await prisma.token.findUnique({
+    where:{
+      token:token
+    }
+  })
+  return find;
+}

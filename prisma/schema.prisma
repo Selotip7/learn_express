@@ -14,10 +14,25 @@ model User {
   password String 
   created_at DateTime @default(now())  
   role Role @default(USER)
+  status userStatus @default(ACTIVE)
+  tokens Token[]
+
   @@map("users")
 }
+model Token{
+  id Int @id @default(autoincrement())
+  token String
+  user_id Int
+  user User @relation(fields: [user_id],references: [id],onDelete: Cascade)
+  
+  }
 
 enum Role{
   USER
   ADMIN
 }  
+
+enum userStatus{
+  ACTIVE
+  INACTIVE
+}

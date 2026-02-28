@@ -230,7 +230,6 @@ window.addEventListener("storage", function (event) {
   }
 });
 async function auth(){
-  console.log("eroor su");
   try{
     const response = await fetch("http://localhost:3001/api/user/me", {
       method: "GET",
@@ -245,16 +244,15 @@ async function auth(){
     const data = await response.json();
 
     if (data.success === false) {
-      localStorage.setItem("role","false")
+      localStorage.setItem("role",data.message||"Unauthorized");
       window.location.href = "login.html";
 
       // return;
     }
-    console.log(data.success)
-    console.log("User valid:", data);
+    
 
   } catch(err){
-    console.log("eroor susssssss");
+    
     console.error(err);
     // window.location.href = "/login.html";
   }
