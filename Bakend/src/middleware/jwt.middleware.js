@@ -43,3 +43,24 @@ export const verifyToken = (req, res, next) => {
   // }
  
 };
+
+
+export const verifyRefreshToken = (req, res, next) => {
+  const token = req.cookies.refreshToken;
+  if (!token) {
+    return res.status(401).json({ 
+      success : false,
+      message: "Silahkan login dahulu" });
+  }
+  jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+    
+    req.token =  token;
+    next();
+  });
+};

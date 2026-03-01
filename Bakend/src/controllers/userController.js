@@ -1,10 +1,12 @@
-import { createUser, login } from "#src/services/userServices.js";
+import { createUser, login } from "#src/services/userService.js";
 import { asyncHandler } from "#src/handler/asyncHandler.js";
 import {
   cookieOptions,
   generateAccessToken,
   generateRefreshToken,
 } from "#src/handler/jwtHandler.js";
+
+import * as tokenService from "#src/services/tokenService.js";
 import jwt from "jsonwebtoken";
 
 export const registration = asyncHandler(async (req, res, next) => {
@@ -36,6 +38,7 @@ export const loginController = asyncHandler(async (req, res, next) => {
   const refreshToken = await generateRefreshToken(user);
   console.log("accessToken:", accessToken);
   res.cookie("refreshToken", refreshToken, cookieOptions);
+  res.cookie("token","adaluuuuurr", cookieOptions);
   res.json({
     success: true,
     user: {
@@ -61,12 +64,12 @@ export const meController = asyncHandler(async (req, res, next) => {
 });
 
 export const logoutController = asyncHandler(async (req, res, next) => {
-  const token = req.cookies.accessToken;
-  console.log("logout is running, token:", token);
-  res.cookie("accessToken", "", { ...cookieOptions, maxAge: 60000 });
+  tokenService.deleteToken(req.token);
+  // console.log("logout is running, token:", token);
+  res.clearCookie("refreshToken", cookieOptions);
   // res.clearCookie("accessToken", cookieOptions);
   res.json({
     message: "logged out",
-    token,
+    // token: req.user.token,
   });
 });

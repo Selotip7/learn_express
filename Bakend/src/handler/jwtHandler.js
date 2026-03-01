@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { createToken } from "#src/services/userServices.js";
+import { createToken } from "#src/services/tokenService.js";
 dotenv.config();
 
 export const cookieOptions = {
@@ -77,8 +77,11 @@ export const generateRefreshToken = async (user) => {
       expiresIn: "30d",
     },
   );
-  user = { ...user, token: refreshToken };
-  await createToken(user);
+  // user = { ...user, token: refreshToken };
+  await createToken({
+    id: user.id,
+    token: refreshToken,
+  });
 
   return refreshToken;
 };
