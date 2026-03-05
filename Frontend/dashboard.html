@@ -242,10 +242,10 @@ async function auth(){
     }
 
     const data = await response.json();
-
+    localStorage.setItem("nx_user", JSON.stringify(data));
     if (data.success === false) {
       localStorage.setItem("role",data.message||"Unauthorized");
-      window.location.href = "login.html";
+      // window.location.href = "login.html";
 
       // return;
     }

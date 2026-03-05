@@ -1,10 +1,16 @@
-import { createUser, login } from "#src/services/userService.js";
+import {
+  createUser,
+  login,
+  
+} from "#src/services/userService.js";
 import { asyncHandler } from "#src/handler/asyncHandler.js";
 import {
   cookieOptions,
   generateAccessToken,
-  generateRefreshToken,
+  generateRefreshToken
 } from "#src/handler/jwtHandler.js";
+
+import * as memberService from "#src/services/memberService.js";
 
 import * as tokenService from "#src/services/tokenService.js";
 import jwt from "jsonwebtoken";
@@ -25,6 +31,7 @@ export const registration = asyncHandler(async (req, res, next) => {
 });
 
 export const loginController = asyncHandler(async (req, res, next) => {
+  console.log("login is running, req.body:", req.body);
   if (!req.body.email || !req.body.password) {
     const error = new Error("email and password are required");
     error.code = 400;
@@ -37,8 +44,9 @@ export const loginController = asyncHandler(async (req, res, next) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user);
   console.log("accessToken:", accessToken);
+    res.cookie("accessToken", accessToken, cookieOptions);
   res.cookie("refreshToken", refreshToken, cookieOptions);
-  res.cookie("token","adaluuuuurr", cookieOptions);
+  // res.cookie("token","adaluuuuurr", cookieOptions);
   res.json({
     success: true,
     user: {
@@ -71,5 +79,41 @@ export const logoutController = asyncHandler(async (req, res, next) => {
   res.json({
     message: "logged out",
     // token: req.user.token,
+  });
+});
+
+export const getAllMemberController = asyncHandler(async (req, res, next) => {
+  const users = await memberService.getAllUsers();
+  res.json({
+    success: true,
+    users: users,
+  });
+});
+
+export const addMemberController = asyncHandler(async (req, res, next) => {
+  // if (!req.body.name || !req.body.email || !req.body.password) {
+  //   const error = new Error("name,email,password are required");
+  //   error.code = 400;
+  //   throw error;
+  // }
+
+  // const { name, email, phone,role,status } = req.body;
+  const newUser = await memberService.addMember(req.body);
+  console.log("newUser:", newUser);
+  res.json({
+    success: true,
+    user: newUser.rows[0],
+  });
+  
+
+
+})
+
+export const deleteMemberController = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const deleted = await memberService.deleteMember(id);
+  res.json({
+    success: true,
+    user: deleted,
   });
 });
