@@ -55,48 +55,55 @@ export default function App() {
   const { message, showToast } = useToast();
 
   // 🔥 AUTH CHECK SAAT APP LOAD
-  useEffect(() => {
-    console.log("app jalan lagi");
-    const checkAuth = async () => {
-      try {
-        let res = await fetch("http://localhost:3001/api/user/me", {
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      let meRes = await fetch(
+        "http://localhost:3001/api/user/me",
+        {
           credentials: "include",
-        });
-
-        if (!res.ok||res.status == 401) {
-          const refresh = await fetch(
-            "http://localhost:3001/api/user/refresh",
-            {
-              credentials: "include",
-            },
-          );
-          const refresRes = await refresh.json();
-          if (!refresh.ok) {
-            throw new Error(refresRes.message);
-          }
-
-          res = await fetch("http://localhost:3001/api/user/me", {
-            credentials: "include",
-          });
         }
-
-        if(!res.ok){
-          throw new Error("Unauthorized");
-        }        
-        const data = await res.json();
-        setUser(data);
-        setPage("dashboard");
-      } catch (err) {
-        setUser(null);
-        alert(err.message);
-        setPage("login");
-      } finally {
-        setLoading(false);
+      );
+      
+      
+      if (!meRes.ok||meRes.status==401) {
+        const refreshRes = await fetch(
+          "http://localhost:3001/api/user/refresh",
+          {
+            credentials: "include",
+          },
+        );
+        
+            if (!refreshRes.ok) {
+      
+              setUser(null);
+              setPage("login");
+              return;
+            }
+        
       }
-    };
 
-    checkAuth();
-  }, []);
+      meRes = await fetch("http://localhost:3001/api/user/me", {
+        credentials: "include",
+      });
+      
+
+      const userData = await meRes.json();
+
+      setUser(userData);
+      setPage("dashboard");
+
+    } catch (err) {
+      console.error("Auth error:", err);
+      setUser(null);
+      setPage("login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  checkAuth();
+}, []);
 
   // ⛔ Jangan render sebelum auth check selesai
   if (loading) return null;

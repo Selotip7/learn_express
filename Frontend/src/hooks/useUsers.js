@@ -8,14 +8,34 @@ export function useUsers() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:3001/api/user/all", {
+      let meRes = await fetch("http://localhost:3001/api/user/all", {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Gagal mengambil data user");
+      if (!meRes.ok || meRes.status === 401) {
+        const refreshRes = await fetch(
+          "http://localhost:3001/api/user/refresh",
+          {
+            credentials: "include",
+          },
+        );
 
-      const data = await res.json();
+        if (!refreshRes.ok) {
+          window.location.href = "/login";
+          return;
+        }
+      }
 
+      meRes = await fetch("http://localhost:3001/api/user/all", {
+        credentials: "include",
+      });
+
+      if (!meRes.ok) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const data = await meRes.json();
       setUsers(data.users); // pastikan backend kirim { users: [...] }
     } catch (err) {
       console.error(err);

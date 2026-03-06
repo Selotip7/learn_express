@@ -14,22 +14,15 @@
 </body>
 
 <script>
-  localStorage.setItem("akhyar","nal")
-    localStorage.setItem("akhyar","naksda")
-    localStorage.setItem("akhyar","sdas")
+  // Simpan fungsi asli
+const logAsli = console.log;
+console.log(console)
+// Monkey Patching: Menimpa console.log
+console.log = function() {
+    logAsli.apply(console, [(new Date()).toString()].concat(arguments));
+};
 
-    cookieStore.set("akhyar","google")
-    cookieStore.set("akhyar","googsda")
-    cookieStore.set("akhyar","goorerere")
-    sessionStorage.setItem("akhyar","sdsd")
-    // const t=async()=>{
+console.log("Pesan ini sekarang memiliki stempel waktu."); // [4, 10]
 
-    //   const a=await cookieStore.get("akhyar")
-    //   // console.log(a)
-    //   alert(JSON.stringify(a))
-    // }
-    // t()
-  document.cookie='name=akhyar;expires'
-    console.log(localStorage.getItem("akhyar"))
 </script>
 </html>

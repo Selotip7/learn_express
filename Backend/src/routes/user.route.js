@@ -20,15 +20,20 @@ const router = express.Router();
 
 router.post("/registration",registration);
 router.post("/login", loginController);
-console.log("login route is running");
-router.get("/logout", verifyRefreshToken, logoutController);
+// console.log("login route is running");
 router.get("/refresh", refreshTokenController);
-// router.get()
-router.get("/me", verifyToken, meController);
-router.post("/add", addMemberController);
-router.get("/all", getAllMemberController);
+router.get("/logout", verifyRefreshToken, logoutController);
+
+router.use(verifyToken);
+router.use(checkRole("ADMIN"));
 router.delete("/:id", deleteMemberController);
+router.get("/all", getAllMemberController);
+router.post("/add", addMemberController);
+router.put("/:id", addMemberController);
+router.get("/me", meController);
 
 
 export default router;
+
+
 

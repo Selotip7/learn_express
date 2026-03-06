@@ -75,6 +75,7 @@ export const logoutController = asyncHandler(async (req, res, next) => {
   tokenService.deleteToken(req.token);
   // console.log("logout is running, token:", token);
   res.clearCookie("refreshToken", cookieOptions);
+    res.clearCookie("accessToken", cookieOptions);
   // res.clearCookie("accessToken", cookieOptions);
   res.json({
     message: "logged out",
@@ -104,9 +105,6 @@ export const addMemberController = asyncHandler(async (req, res, next) => {
     success: true,
     user: newUser.rows[0],
   });
-  
-
-
 })
 
 export const deleteMemberController = asyncHandler(async (req, res, next) => {
@@ -115,5 +113,15 @@ export const deleteMemberController = asyncHandler(async (req, res, next) => {
   res.json({
     success: true,
     user: deleted,
+  });
+});
+
+export const updateMemberController = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { name, email, phone, role, status } = req.body; 
+  const updated = await memberService.updateMember(id, name, email, phone, role, status);
+  res.json({
+    success: true,
+    user: updated,
   });
 });

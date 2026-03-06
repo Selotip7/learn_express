@@ -17,7 +17,7 @@ dotenv.config();
 
   export const verifyToken = (req, res, next) => {
   const token = req.cookies.accessToken;  // Mengambil token dari cookies
-  console.log("token from cookie:", token);
+
   if (!token) {
     return res.status(401).json({ 
       success : false,

@@ -42,3 +42,11 @@ export const deleteMember = async (id) => {
   }
   return deleted.rows[0];
 };
+
+export const updateMember = async (id, name, email, phone, role, status) => {
+  const updated = await pool.query(
+    "UPDATE members SET name=$1, email=$2, phone=$3, role=$4, status=$5 WHERE id=$6",
+    [name, email, phone, role, status, id],
+  );
+  return updated.rows[0];
+};
